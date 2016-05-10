@@ -1,0 +1,1 @@
+const char * some_c_func();
