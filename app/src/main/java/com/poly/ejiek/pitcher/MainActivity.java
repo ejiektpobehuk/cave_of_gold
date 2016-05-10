@@ -14,6 +14,11 @@ import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
 
+    static {
+        System.loadLibrary("jni-wrapper");
+    }
+    public native String getMsgFromJni();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+        ((EditText) findViewById(R.id.val_x)).setText(getMsgFromJni());
     }
 
     public void buttonOnCLick(View v){
