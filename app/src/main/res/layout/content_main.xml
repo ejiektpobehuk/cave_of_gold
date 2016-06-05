@@ -12,40 +12,37 @@
     tools:context="com.poly.ejiek.pitcher.MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:inputType="numberDecimal"
-        android:ems="10"
-        android:id="@+id/val_x"
-        android:text="X" />
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:inputType="numberDecimal"
-        android:ems="10"
-        android:id="@+id/val_y"
-        android:layout_below="@+id/val_x"
-        android:layout_alignParentStart="true"
-        android:text="y" />
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Sum"
-        android:id="@+id/button"
-        android:layout_below="@+id/val_y"
-        android:layout_alignParentStart="true"
-        android:onClick="buttonOnCLick" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sum"
+                android:id="@+id/button"
+                android:layout_alignParentStart="true"
+                android:onClick="buttonOnCLick" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Result"
-        android:id="@+id/result"
-        android:layout_below="@+id/button"
-        android:layout_alignParentStart="true"
-        android:visibility="visible" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="Result"
+                android:id="@+id/result"
+                android:layout_below="@+id/button"
+                android:layout_alignParentStart="true"
+                android:visibility="visible" />
+        </LinearLayout>
+
+        <include layout="@layout/scatter_plot" />
+    </LinearLayout>
+
+
 </RelativeLayout>
