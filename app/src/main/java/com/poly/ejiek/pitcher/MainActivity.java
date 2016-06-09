@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        new AndroidFFMPEGLocator(this);
         algorithm = PitchEstimationAlgorithm.YIN;
         setAlgthToSpinner();
 
@@ -92,6 +92,8 @@ public class MainActivity extends AppCompatActivity{
 
         X = new ArrayList<>();
         Y = new ArrayList<>();
+        micX = new ArrayList<>();
+        micY = new ArrayList<>();
 
         mp = MediaPlayer.create(this, R.raw.thisismine);
 
@@ -164,12 +166,8 @@ public class MainActivity extends AppCompatActivity{
 
     public void buttonOnCLick(View v){
         Button button=(Button) v;
-
-        setContentView(R.layout.activity_main);
-        TextView text = (TextView) findViewById(R.id.result);
-        text.setText("Dots: " + X.size()+ "; Nulls: "+ nulls + "; max Null Block: " + maxNullBlock);
         mp.start();
-        plot();
+
     }
 
     public void button2OnCLick(View v){
@@ -177,7 +175,8 @@ public class MainActivity extends AppCompatActivity{
 
         setContentView(R.layout.activity_main);
         TextView text = (TextView) findViewById(R.id.result);
-        text.setText(algorithm.toString());
+        text.setText("Dots: " + X.size()+ "; Nulls: "+ nulls + "; max Null Block: " + maxNullBlock);
+        plot();
     }
 
     public void listenButtonOnCLick(View v){
@@ -186,7 +185,7 @@ public class MainActivity extends AppCompatActivity{
         if(isListening == false) {
             isListening = true;
             button.setText("Stop");
-            micDispatcher = AudioDispatcherFactory.fromDefaultMicrophone((int) sampleRate, bufferSize, 0);
+            micDispatcher = AudioDispatcherFactory.fromDefaultMicrophone((int) sampleRate, 7186, 0);
 
             PitchDetectionHandler mpdh = new PitchDetectionHandler() {
                 @Override
@@ -212,11 +211,17 @@ public class MainActivity extends AppCompatActivity{
             };
             AudioProcessor mp = new PitchProcessor(algorithm, sampleRate, bufferSize, mpdh);
             micDispatcher.addAudioProcessor(mp);
-            new Thread(micDispatcher, "Audio Dispatcher").start();
+            new Thread(micDispatcher,"Audio Dispatcher").start();
+  /*          runOnUiThread(new Runnable() {
+                public void run() {
+                    micDispatcher.run();
+                }
+            });*/
         }else {
             isListening = false;
             micDispatcher.stop();
             button.setText("Listen");
+            //plot();
         }
 
     }
@@ -248,47 +253,51 @@ public class MainActivity extends AppCompatActivity{
         plot = (XYPlot) findViewById(R.id.plot);
 
         // create a couple arrays of y-values to plot:
+        if(Y.size()>0){
+            Integer[] intObj = new Integer[Y.size()+X.size()];
+            for (int i=0; i < Y.size(); i++) {
+                intObj[i*2] = Integer.valueOf(X.get(i));
+                intObj[i*2+1] = Integer.valueOf(Y.get(i));
+            }
 
-        double myTest[] = new double[5];
-        myTest[0] = 0.1;
-        myTest[1] = 0.4;
-        myTest[2] = 0.2;
-        myTest[3] = 0.8;
-        myTest[4] = 0.6;
-        int roundNum = (int) (myTest[0] + 0.5f);
+            Number[] series1Numbers = (Number[])intObj;
 
-        Integer[] intObj = new Integer[Y.size()+X.size()];
-        for (int i=0; i < Y.size(); i++) {
-            intObj[i*2] = Integer.valueOf(X.get(i));
-            intObj[i*2+1] = Integer.valueOf(Y.get(i));
+
+            XYSeries series1 = new SimpleXYSeries(Arrays.asList(series1Numbers),
+                    SimpleXYSeries.ArrayFormat.XY_VALS_INTERLEAVED, "Series1");
+
+            LineAndPointFormatter series1Format = new LineAndPointFormatter();
+            series1Format.setPointLabelFormatter(new PointLabelFormatter());
+            series1Format.configure(getApplicationContext(),
+                    R.xml.line_point_formatter_with_labels);
+
+
+            plot.addSeries(series1, series1Format);
         }
 
-        Number[] series1Numbers = (Number[])intObj;
+        if(micY.size()>0){
+            Integer[] intObj = new Integer[Y.size()+X.size()];
+            for (int i=0; i < micY.size(); i++) {
+                intObj[i*2] = Integer.valueOf(micX.get(i));
+                intObj[i*2+1] = Integer.valueOf(micY.get(i));
+            }
 
-        Arrays.asList(myTest);
-        // turn the above arrays into XYSeries':
-        // (Y_VALS_ONLY means use the element index as the x value)
-        XYSeries series1 = new SimpleXYSeries(Arrays.asList(series1Numbers),
-                SimpleXYSeries.ArrayFormat.XY_VALS_INTERLEAVED, "Series1");
+            Number[] series2Numbers = (Number[])intObj;
+
+            XYSeries series2 = new SimpleXYSeries(Arrays.asList(series2Numbers),
+                    SimpleXYSeries.ArrayFormat.XY_VALS_INTERLEAVED, "Series2");
+
+            LineAndPointFormatter series2Format = new LineAndPointFormatter();
+            series2Format.setPointLabelFormatter(new PointLabelFormatter());
+            series2Format.configure(getApplicationContext(),
+                    R.xml.line_point_formatter_with_labels);
 
 
-        // create formatters to use for drawing a series using LineAndPointRenderer
-        // and configure them from xml:
-        LineAndPointFormatter series1Format = new LineAndPointFormatter();
-        series1Format.setPointLabelFormatter(new PointLabelFormatter());
-        series1Format.configure(getApplicationContext(),
-                R.xml.line_point_formatter_with_labels);
+            plot.addSeries(series2, series2Format);
+        }
 
-        // just for fun, add some smoothing to the lines:
-        // see: http://androidplot.com/smooth-curves-and-androidplot/
-        //series1Format.setInterpolationParams(
-        //        new CatmullRomInterpolator.Params(10, CatmullRomInterpolator.Type.Centripetal));
-
-        //series2Format.setInterpolationParams(
-        //        new CatmullRomInterpolator.Params(10, CatmullRomInterpolator.Type.Centripetal));
 
         // add a new series' to the xyplot:
-        plot.addSeries(series1, series1Format);
 
         // reduce the number of range labels
         plot.setTicksPerRangeLabel(3);
