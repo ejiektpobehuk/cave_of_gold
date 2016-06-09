@@ -10,8 +10,11 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import be.tarsos.dsp.AudioProcessor;
@@ -44,33 +47,57 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity{
 
     private ArrayList<Integer> X;
     private ArrayList<Integer> Y;
+    private int nulls = 0;
+    private int currentNullBlock = 1;
+    private int maxNullBlock = 1;
+    private float previosPitch = 0;
+
+
+    private Thread rec;
+    private ArrayList<Integer> micX;
+    private ArrayList<Integer> micY;
+    private int micNulls = 0;
+    private int micCurrentNullBlock = 1;
+    private int micMaxNullBlock = 1;
+    private float micPreviosPitch = 0;
+    private boolean isListening = false;
 
     private XYPlot plot;
-    MediaPlayer mp;
-    AudioDispatcher dispatcher;
+    private MediaPlayer mp;
+    private AudioDispatcher dispatcher;
+    private AudioDispatcher micDispatcher;
+    private Spinner algSpinner;
+    private PitchEstimationAlgorithm algorithm;
+
+    private float sampleRate = 44100;
+    private int bufferSize = 1024;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        algorithm = PitchEstimationAlgorithm.YIN;
+        setAlgthToSpinner();
+
+        EditText etSampleRate = (EditText) findViewById(R.id.editSampRate);
+        EditText etBufSize = (EditText) findViewById(R.id.editBufSize);
+
+        sampleRate = Float.parseFloat(etSampleRate.getText().toString());
+        bufferSize = Integer.parseInt(etBufSize.getText().toString());
+
         X = new ArrayList<>();
         Y = new ArrayList<>();
-
-        TextView text = (TextView) findViewById(R.id.result);
-        text.setText("da "+Environment.getDataDirectory());
 
         mp = MediaPlayer.create(this, R.raw.thisismine);
 
         File externalStorage = Environment.getExternalStorageDirectory();
         File wavFile = new File(externalStorage.getAbsolutePath() , "/thisismine.wav");
-        dispatcher = AudioDispatcherFactory.fromPipe(wavFile.getAbsolutePath(),44100,1024,0);
-
-        //dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050,1024,0);
+        dispatcher = AudioDispatcherFactory.fromPipe(wavFile.getAbsolutePath(),(int)sampleRate,bufferSize,0);
 
         PitchDetectionHandler pdh = new PitchDetectionHandler() {
             @Override
@@ -81,23 +108,22 @@ public class MainActivity extends AppCompatActivity {
                             double timeStamp = audioEvent.getTimeStamp();
                             X.add((int) (timeStamp*10 + 0.5d));
                             Y.add((int) (pitchInHz + 0.5f));
+                        }else {
+                            nulls++;
+                            if (previosPitch == -1){
+                                currentNullBlock++;
+                                if (currentNullBlock > maxNullBlock) maxNullBlock = currentNullBlock;
+                            }else{
+                                currentNullBlock = 1;
+                            }
                         }
+                previosPitch = pitchInHz;
             }
         };
-        AudioProcessor p = new PitchProcessor(PitchEstimationAlgorithm.YIN, 44100, 1024, pdh);
+        AudioProcessor p = new PitchProcessor(algorithm, sampleRate, bufferSize, pdh);
+
         dispatcher.addAudioProcessor(p);
         new Thread(dispatcher,"Audio Dispatcher").start();
-  /*      new Thread(new Runnable() {
-            @Override
-            public void run() {
-                File externalStorage = Environment.getExternalStorageDirectory();
-                File mp3 = new File(externalStorage.getAbsolutePath() , "/thisismine.wav");
-                AudioDispatcher adp;
-                adp = AudioDispatcherFactory.fromPipe(mp3.getAbsolutePath(),44100,5000,2500);
-                adp.addAudioProcessor(new AndroidAudioPlayer(adp.getFormat(),5000, AudioManager.STREAM_MUSIC));
-                adp.run();
-            }
-        }).start();*/
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -107,10 +133,33 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                Snackbar.make(view, "This will be a mic button", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
         });
+    }
+
+    private void setAlgthToSpinner() {
+        Spinner algSpinner = (Spinner) findViewById(R.id.spinner);
+        ArrayList<String> spinnerArray = new ArrayList<String>();
+
+        for (PitchEstimationAlgorithm alg : PitchEstimationAlgorithm.values())
+                spinnerArray.add(alg.toString());
+
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, spinnerArray); //selected item will look like a spinner set from XML
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        algSpinner.setAdapter(adapter);
+        algSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+                        algorithm = PitchEstimationAlgorithm.valueOf(parent.getItemAtPosition(pos).toString());
+                }
+
+                public void onNothingSelected(AdapterView<?> arg0) {
+
+                }
+            });
+
     }
 
     public void buttonOnCLick(View v){
@@ -118,17 +167,57 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
         TextView text = (TextView) findViewById(R.id.result);
-        text.setText("X: " + X.size()+ "; Y: "+ Y.size());
+        text.setText("Dots: " + X.size()+ "; Nulls: "+ nulls + "; max Null Block: " + maxNullBlock);
         mp.start();
         plot();
+    }
 
-//        TextView result = (TextView) findViewById(R.id.result);
-//        EditText x = (EditText) findViewById(R.id.val_x);
-//        EditText y = (EditText) findViewById(R.id.val_y);
-//        int xi = Integer.parseInt(x.getText().toString());
-//        int yi = Integer.parseInt(y.getText().toString());
-        //result.setVisibility(0);
-        //result.setText(Integer.toString(xi+yi));;
+    public void button2OnCLick(View v){
+        Button button=(Button) v;
+
+        setContentView(R.layout.activity_main);
+        TextView text = (TextView) findViewById(R.id.result);
+        text.setText(algorithm.toString());
+    }
+
+    public void listenButtonOnCLick(View v){
+        Button button=(Button) v;
+
+        if(isListening == false) {
+            isListening = true;
+            button.setText("Stop");
+            micDispatcher = AudioDispatcherFactory.fromDefaultMicrophone((int) sampleRate, bufferSize, 0);
+
+            PitchDetectionHandler mpdh = new PitchDetectionHandler() {
+                @Override
+                public void handlePitch(PitchDetectionResult result, final AudioEvent audioEvent) {
+                    final float pitchInHz = result.getPitch();
+                    //setContentView(R.layout.activity_main);
+                    if (pitchInHz != -1) {
+                        double timeStamp = audioEvent.getTimeStamp();
+                        micX.add((int) (timeStamp * 10 + 0.5d));
+                        micY.add((int) (pitchInHz + 0.5f));
+                    } else {
+                        micNulls++;
+                        if (micPreviosPitch == -1) {
+                            micCurrentNullBlock++;
+                            if (micCurrentNullBlock > micMaxNullBlock)
+                                micMaxNullBlock = micCurrentNullBlock;
+                        } else {
+                            micCurrentNullBlock = 1;
+                        }
+                    }
+                    micPreviosPitch = pitchInHz;
+                }
+            };
+            AudioProcessor mp = new PitchProcessor(algorithm, sampleRate, bufferSize, mpdh);
+            micDispatcher.addAudioProcessor(mp);
+            new Thread(micDispatcher, "Audio Dispatcher").start();
+        }else {
+            isListening = false;
+            micDispatcher.stop();
+            button.setText("Listen");
+        }
 
     }
 
@@ -208,6 +297,4 @@ public class MainActivity extends AppCompatActivity {
         plot.getGraphWidget().setDomainLabelOrientation(-45);
 
     }
-
-
 }

@@ -1,7 +1,8 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:ap="http://schemas.android.com/apk/res-auto"
-    android:layout_height="wrap_content"
-    android:layout_width="wrap_content">
+    android:orientation="vertical"
+    android:layout_height="410dp"
+    android:layout_width="match_parent">
 
     <com.androidplot.xy.XYPlot
         android:id="@+id/plot"
@@ -38,4 +39,4 @@
         ap:legendIconWidth="15dp"
         ap:legendHeight="25dp"
         ap:legendAnchorPosition="right_bottom"/>
-</RelativeLayout>
+</LinearLayout>
