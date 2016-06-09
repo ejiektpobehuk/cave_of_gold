@@ -76,6 +76,8 @@ public class MainActivity extends AppCompatActivity{
     private float sampleRate = 44100;
     private int bufferSize = 1024;
 
+    private File wavFile;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -98,34 +100,8 @@ public class MainActivity extends AppCompatActivity{
         mp = MediaPlayer.create(this, R.raw.thisismine);
 
         File externalStorage = Environment.getExternalStorageDirectory();
-        File wavFile = new File(externalStorage.getAbsolutePath() , "/thisismine.wav");
-        dispatcher = AudioDispatcherFactory.fromPipe(wavFile.getAbsolutePath(),(int)sampleRate,bufferSize,0);
+        wavFile = new File(externalStorage.getAbsolutePath() , "/thisismine.wav");
 
-        PitchDetectionHandler pdh = new PitchDetectionHandler() {
-            @Override
-            public void handlePitch(PitchDetectionResult result, final AudioEvent audioEvent) {
-                final float pitchInHz = result.getPitch();
-                        //setContentView(R.layout.activity_main);
-                        if(pitchInHz != -1) {
-                            double timeStamp = audioEvent.getTimeStamp();
-                            X.add((int) (timeStamp*10 + 0.5d));
-                            Y.add((int) (pitchInHz + 0.5f));
-                        }else {
-                            nulls++;
-                            if (previosPitch == -1){
-                                currentNullBlock++;
-                                if (currentNullBlock > maxNullBlock) maxNullBlock = currentNullBlock;
-                            }else{
-                                currentNullBlock = 1;
-                            }
-                        }
-                previosPitch = pitchInHz;
-            }
-        };
-        AudioProcessor p = new PitchProcessor(algorithm, sampleRate, bufferSize, pdh);
-
-        dispatcher.addAudioProcessor(p);
-        new Thread(dispatcher,"Audio Dispatcher").start();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -165,7 +141,33 @@ public class MainActivity extends AppCompatActivity{
     }
 
     public void buttonOnCLick(View v){
-        Button button=(Button) v;
+        dispatcher = AudioDispatcherFactory.fromPipe(wavFile.getAbsolutePath(),(int)sampleRate,bufferSize,0);
+
+        PitchDetectionHandler pdh = new PitchDetectionHandler() {
+            @Override
+            public void handlePitch(PitchDetectionResult result, final AudioEvent audioEvent) {
+                final float pitchInHz = result.getPitch();
+                //setContentView(R.layout.activity_main);
+                if(pitchInHz != -1) {
+                    double timeStamp = audioEvent.getTimeStamp();
+                    X.add((int) (timeStamp*10 + 0.5d));
+                    Y.add((int) (pitchInHz + 0.5f));
+                }else {
+                    nulls++;
+                    if (previosPitch == -1){
+                        currentNullBlock++;
+                        if (currentNullBlock > maxNullBlock) maxNullBlock = currentNullBlock;
+                    }else{
+                        currentNullBlock = 1;
+                    }
+                }
+                previosPitch = pitchInHz;
+            }
+        };
+        AudioProcessor p = new PitchProcessor(algorithm, sampleRate, bufferSize, pdh);
+
+        dispatcher.addAudioProcessor(p);
+        new Thread(dispatcher,"Audio Dispatcher").start();
         mp.start();
 
     }
@@ -176,6 +178,8 @@ public class MainActivity extends AppCompatActivity{
         setContentView(R.layout.activity_main);
         TextView text = (TextView) findViewById(R.id.result);
         text.setText("Dots: " + X.size()+ "; Nulls: "+ nulls + "; max Null Block: " + maxNullBlock);
+        TextView micText = (TextView) findViewById(R.id.micResult);
+        micText.setText("Dots: " + micX.size()+ "; Nulls: "+ micNulls + "; max Null Block: " + micMaxNullBlock);
         plot();
     }
 
@@ -185,7 +189,7 @@ public class MainActivity extends AppCompatActivity{
         if(isListening == false) {
             isListening = true;
             button.setText("Stop");
-            micDispatcher = AudioDispatcherFactory.fromDefaultMicrophone((int) sampleRate, 7186, 0);
+            micDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
 
             PitchDetectionHandler mpdh = new PitchDetectionHandler() {
                 @Override
@@ -209,7 +213,7 @@ public class MainActivity extends AppCompatActivity{
                     micPreviosPitch = pitchInHz;
                 }
             };
-            AudioProcessor mp = new PitchProcessor(algorithm, sampleRate, bufferSize, mpdh);
+            AudioProcessor mp = new PitchProcessor(algorithm, 22050, 1024, mpdh);
             micDispatcher.addAudioProcessor(mp);
             new Thread(micDispatcher,"Audio Dispatcher").start();
   /*          runOnUiThread(new Runnable() {
@@ -290,7 +294,7 @@ public class MainActivity extends AppCompatActivity{
             LineAndPointFormatter series2Format = new LineAndPointFormatter();
             series2Format.setPointLabelFormatter(new PointLabelFormatter());
             series2Format.configure(getApplicationContext(),
-                    R.xml.line_point_formatter_with_labels);
+                    R.xml.line_point_formatter_with_labels_2);
 
 
             plot.addSeries(series2, series2Format);
