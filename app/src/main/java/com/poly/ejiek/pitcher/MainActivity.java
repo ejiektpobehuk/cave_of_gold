@@ -147,6 +147,8 @@ public class MainActivity extends AppCompatActivity{
     public void buttonOnCLick(View v){
         dispatcher = AudioDispatcherFactory.fromPipe(wavFile.getAbsolutePath(),(int)sampleRate,bufferSize,0);
 
+        nativeWipe();
+
         PitchDetectionHandler pdh = new PitchDetectionHandler() {
             @Override
             public void handlePitch(PitchDetectionResult result, final AudioEvent audioEvent) {
@@ -241,6 +243,19 @@ public class MainActivity extends AppCompatActivity{
         }
 
     }
+
+    private void nativeWipe() {
+        nulls = 0;
+        currentNullBlock = 1;
+        maxNullBlock = 1;
+        previosPitch = 0;
+        firstPitch = true;
+        X.clear();
+        Y.clear();
+        X = new ArrayList<>();
+        Y = new ArrayList<>();
+    }
+
 
     private void micWipe() {
         micNulls = 0;
