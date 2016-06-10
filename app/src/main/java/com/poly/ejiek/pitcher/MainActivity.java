@@ -304,7 +304,7 @@ public class MainActivity extends AppCompatActivity{
         }
 
         if(micY.size()>0){
-            Integer[] intObj = new Integer[Y.size()+X.size()];
+            Integer[] intObj = new Integer[micY.size()+micX.size()];
             for (int i=0; i < micY.size(); i++) {
                 intObj[i*2] = Integer.valueOf(micX.get(i));
                 intObj[i*2+1] = Integer.valueOf(micY.get(i));
