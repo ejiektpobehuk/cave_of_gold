@@ -187,6 +187,7 @@ public class MainActivity extends AppCompatActivity{
         Button button=(Button) v;
 
         if(isListening == false) {
+            micWipe();
             isListening = true;
             button.setText("Stop");
             micDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
@@ -228,6 +229,17 @@ public class MainActivity extends AppCompatActivity{
             //plot();
         }
 
+    }
+
+    private void micWipe() {
+        micNulls = 0;
+        micCurrentNullBlock = 1;
+        micMaxNullBlock = 1;
+        micPreviosPitch = 0;
+        micX.clear();
+        micY.clear();
+        micX = new ArrayList<>();
+        micY = new ArrayList<>();
     }
 
     @Override
