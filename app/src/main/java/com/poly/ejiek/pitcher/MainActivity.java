@@ -151,13 +151,12 @@ public class MainActivity extends AppCompatActivity{
             @Override
             public void handlePitch(PitchDetectionResult result, final AudioEvent audioEvent) {
                 final float pitchInHz = result.getPitch();
-                if(firstPitch){
-                    timeCorrection = (int)(audioEvent.getTimeStamp()*10 +0.5d);
-                    firstPitch = false;
-                }
                 //setContentView(R.layout.activity_main);
                 if(pitchInHz != -1) {
-                    double timeStamp = audioEvent.getTimeStamp();
+                    if(firstPitch){
+                        timeCorrection = (int)(audioEvent.getTimeStamp()*10 +0.5d);
+                        firstPitch = false;
+                    }                    double timeStamp = audioEvent.getTimeStamp();
                     X.add((int) (timeStamp*10 + 0.5d) - timeCorrection);
                     Y.add((int) (pitchInHz + 0.5f));
                 }else {
@@ -204,12 +203,12 @@ public class MainActivity extends AppCompatActivity{
                 @Override
                 public void handlePitch(PitchDetectionResult result, final AudioEvent audioEvent) {
                     final float pitchInHz = result.getPitch();
-                    if(micFirstPitch){
-                        micTimeCorrection = (int)(audioEvent.getTimeStamp()*10 +0.5d);
-                        micFirstPitch = false;
-                    }
                     //setContentView(R.layout.activity_main);
                     if (pitchInHz != -1) {
+                        if(micFirstPitch){
+                            micTimeCorrection = (int)(audioEvent.getTimeStamp()*10 +0.5d);
+                            micFirstPitch = false;
+                        }
                         double timeStamp = audioEvent.getTimeStamp();
                         micX.add((int) (timeStamp * 10 + 0.5d) - micTimeCorrection);
                         micY.add((int) (pitchInHz + 0.5f));
@@ -248,6 +247,7 @@ public class MainActivity extends AppCompatActivity{
         micCurrentNullBlock = 1;
         micMaxNullBlock = 1;
         micPreviosPitch = 0;
+        micFirstPitch = true;
         micX.clear();
         micY.clear();
         micX = new ArrayList<>();
