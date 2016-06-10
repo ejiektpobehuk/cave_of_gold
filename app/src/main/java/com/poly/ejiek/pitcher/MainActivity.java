@@ -65,6 +65,8 @@ public class MainActivity extends AppCompatActivity{
     private int micMaxNullBlock = 1;
     private float micPreviosPitch = 0;
     private boolean isListening = false;
+    private boolean firstPitch = true;
+    private int timeCorrection = 0;
 
     private XYPlot plot;
     private MediaPlayer mp;
@@ -72,6 +74,8 @@ public class MainActivity extends AppCompatActivity{
     private AudioDispatcher micDispatcher;
     private Spinner algSpinner;
     private PitchEstimationAlgorithm algorithm;
+    private boolean micFirstPitch = true;
+    private int micTimeCorrection = 0;
 
     private float sampleRate = 44100;
     private int bufferSize = 1024;
@@ -147,10 +151,14 @@ public class MainActivity extends AppCompatActivity{
             @Override
             public void handlePitch(PitchDetectionResult result, final AudioEvent audioEvent) {
                 final float pitchInHz = result.getPitch();
+                if(firstPitch){
+                    timeCorrection = (int)(audioEvent.getTimeStamp()*10 +0.5d);
+                    firstPitch = false;
+                }
                 //setContentView(R.layout.activity_main);
                 if(pitchInHz != -1) {
                     double timeStamp = audioEvent.getTimeStamp();
-                    X.add((int) (timeStamp*10 + 0.5d));
+                    X.add((int) (timeStamp*10 + 0.5d) - timeCorrection);
                     Y.add((int) (pitchInHz + 0.5f));
                 }else {
                     nulls++;
@@ -196,10 +204,14 @@ public class MainActivity extends AppCompatActivity{
                 @Override
                 public void handlePitch(PitchDetectionResult result, final AudioEvent audioEvent) {
                     final float pitchInHz = result.getPitch();
+                    if(micFirstPitch){
+                        micTimeCorrection = (int)(audioEvent.getTimeStamp()*10 +0.5d);
+                        micFirstPitch = false;
+                    }
                     //setContentView(R.layout.activity_main);
                     if (pitchInHz != -1) {
                         double timeStamp = audioEvent.getTimeStamp();
-                        micX.add((int) (timeStamp * 10 + 0.5d));
+                        micX.add((int) (timeStamp * 10 + 0.5d) - micTimeCorrection);
                         micY.add((int) (pitchInHz + 0.5f));
                     } else {
                         micNulls++;
