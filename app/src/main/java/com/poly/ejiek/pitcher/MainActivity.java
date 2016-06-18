@@ -49,6 +49,17 @@ import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity{
 
+    private XYPlot plot;
+    private MediaPlayer mp;
+    private Spinner algSpinner;
+
+    private Analyzer analyzer;
+    private Sample nativeSample;
+    private Sample micSample;
+    private boolean firstPitch = true;
+    private AudioDispatcher dispatcher;
+    private int timeCorrection = 0;
+
     private ArrayList<Integer> X;
     private ArrayList<Integer> Y;
     private int nulls = 0;
@@ -56,27 +67,9 @@ public class MainActivity extends AppCompatActivity{
     private int maxNullBlock = 1;
     private float previosPitch = 0;
 
-
-    private Thread rec;
-    private ArrayList<Integer> micX;
-    private ArrayList<Integer> micY;
-    private int micNulls = 0;
-    private int micCurrentNullBlock = 1;
-    private int micMaxNullBlock = 1;
-    private float micPreviosPitch = 0;
     private boolean isListening = false;
-    private boolean firstPitch = true;
-    private int timeCorrection = 0;
 
-    private XYPlot plot;
-    private MediaPlayer mp;
-    private AudioDispatcher dispatcher;
-    private AudioDispatcher micDispatcher;
-    private Spinner algSpinner;
-    private PitchEstimationAlgorithm algorithm;
-    private boolean micFirstPitch = true;
-    private int micTimeCorrection = 0;
-
+    private ExampleManager eManager;
     private float sampleRate = 44100;
     private int bufferSize = 1024;
 
@@ -87,8 +80,9 @@ public class MainActivity extends AppCompatActivity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         new AndroidFFMPEGLocator(this);
-        algorithm = PitchEstimationAlgorithm.YIN;
         setAlgthToSpinner();
+
+        analyzer = new Analyzer();
 
         EditText etSampleRate = (EditText) findViewById(R.id.editSampRate);
         EditText etBufSize = (EditText) findViewById(R.id.editBufSize);
@@ -98,13 +92,13 @@ public class MainActivity extends AppCompatActivity{
 
         X = new ArrayList<>();
         Y = new ArrayList<>();
-        micX = new ArrayList<>();
-        micY = new ArrayList<>();
 
         mp = MediaPlayer.create(this, R.raw.thisismine);
 
         File externalStorage = Environment.getExternalStorageDirectory();
         wavFile = new File(externalStorage.getAbsolutePath() , "/thisismine.wav");
+
+        eManager = new ExampleManager();
 
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -134,7 +128,7 @@ public class MainActivity extends AppCompatActivity{
         algSpinner.setAdapter(adapter);
         algSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-                        algorithm = PitchEstimationAlgorithm.valueOf(parent.getItemAtPosition(pos).toString());
+                        analyzer.setAlgorithm(PitchEstimationAlgorithm.valueOf(parent.getItemAtPosition(pos).toString()));
                 }
 
                 public void onNothingSelected(AdapterView<?> arg0) {
@@ -173,7 +167,7 @@ public class MainActivity extends AppCompatActivity{
                 previosPitch = pitchInHz;
             }
         };
-        AudioProcessor p = new PitchProcessor(algorithm, sampleRate, bufferSize, pdh);
+        AudioProcessor p = new PitchProcessor(analyzer.getAlgorithm(), sampleRate, bufferSize, pdh);
 
         dispatcher.addAudioProcessor(p);
         new Thread(dispatcher,"Audio Dispatcher").start();
@@ -188,7 +182,7 @@ public class MainActivity extends AppCompatActivity{
         TextView text = (TextView) findViewById(R.id.result);
         text.setText("Dots: " + X.size()+ "; Nulls: "+ nulls + "; max Null Block: " + maxNullBlock);
         TextView micText = (TextView) findViewById(R.id.micResult);
-        micText.setText("Dots: " + micX.size()+ "; Nulls: "+ micNulls + "; max Null Block: " + micMaxNullBlock);
+        micText.setText("Dots: " + micSample.getSizeX()+ "; Nulls: "+ micSample.getNulls() + "; max Null Block: " + micSample.getMaxNullBlock());
         plot();
     }
 
@@ -196,48 +190,13 @@ public class MainActivity extends AppCompatActivity{
         Button button=(Button) v;
 
         if(isListening == false) {
-            micWipe();
+            analyzer.startMicSample();
             isListening = true;
             button.setText("Stop");
-            micDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
-
-            PitchDetectionHandler mpdh = new PitchDetectionHandler() {
-                @Override
-                public void handlePitch(PitchDetectionResult result, final AudioEvent audioEvent) {
-                    final float pitchInHz = result.getPitch();
-                    //setContentView(R.layout.activity_main);
-                    if (pitchInHz != -1) {
-                        if(micFirstPitch){
-                            micTimeCorrection = (int)(audioEvent.getTimeStamp()*10 +0.5d);
-                            micFirstPitch = false;
-                        }
-                        double timeStamp = audioEvent.getTimeStamp();
-                        micX.add((int) (timeStamp * 10 + 0.5d) - micTimeCorrection);
-                        micY.add((int) (pitchInHz + 0.5f));
-                    } else {
-                        micNulls++;
-                        if (micPreviosPitch == -1) {
-                            micCurrentNullBlock++;
-                            if (micCurrentNullBlock > micMaxNullBlock)
-                                micMaxNullBlock = micCurrentNullBlock;
-                        } else {
-                            micCurrentNullBlock = 1;
-                        }
-                    }
-                    micPreviosPitch = pitchInHz;
-                }
-            };
-            AudioProcessor mp = new PitchProcessor(algorithm, 22050, 1024, mpdh);
-            micDispatcher.addAudioProcessor(mp);
-            new Thread(micDispatcher,"Audio Dispatcher").start();
-  /*          runOnUiThread(new Runnable() {
-                public void run() {
-                    micDispatcher.run();
-                }
-            });*/
         }else {
             isListening = false;
-            micDispatcher.stop();
+            analyzer.micStop();
+            micSample = analyzer.getMicSample();
             button.setText("Listen");
             //plot();
         }
@@ -254,19 +213,6 @@ public class MainActivity extends AppCompatActivity{
         Y.clear();
         X = new ArrayList<>();
         Y = new ArrayList<>();
-    }
-
-
-    private void micWipe() {
-        micNulls = 0;
-        micCurrentNullBlock = 1;
-        micMaxNullBlock = 1;
-        micPreviosPitch = 0;
-        micFirstPitch = true;
-        micX.clear();
-        micY.clear();
-        micX = new ArrayList<>();
-        micY = new ArrayList<>();
     }
 
     @Override
@@ -318,14 +264,8 @@ public class MainActivity extends AppCompatActivity{
             plot.addSeries(series1, series1Format);
         }
 
-        if(micY.size()>0){
-            Integer[] intObj = new Integer[micY.size()+micX.size()];
-            for (int i=0; i < micY.size(); i++) {
-                intObj[i*2] = Integer.valueOf(micX.get(i));
-                intObj[i*2+1] = Integer.valueOf(micY.get(i));
-            }
-
-            Number[] series2Numbers = (Number[])intObj;
+        if(!micSample.isEmpty()){
+            Number[] series2Numbers = (Number[])micSample.interleave();
 
             XYSeries series2 = new SimpleXYSeries(Arrays.asList(series2Numbers),
                     SimpleXYSeries.ArrayFormat.XY_VALS_INTERLEAVED, "Series2");
