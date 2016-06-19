@@ -3,6 +3,7 @@ package com.poly.ejiek.pitcher;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
@@ -24,7 +25,11 @@ import com.androidplot.xy.XYPlot;
 import com.androidplot.xy.XYSeries;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -75,7 +80,7 @@ public class PitchActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         example = (Example) intent.getParcelableExtra("Example");
-
+        example.setContext(getApplicationContext());
         setAlgthToSpinner();
 
         analyzer = new Analyzer();
@@ -91,14 +96,10 @@ public class PitchActivity extends AppCompatActivity {
 
         mp = MediaPlayer.create(this, example.getResourceID());
 
-        setContentView(R.layout.activity_pitch);
-        TextView text = (TextView) findViewById(R.id.result);
-        text.setText("example: "+ example.getName() +" "+ example.getPath() +" "+example.getResourceID());
-
         File externalStorage = Environment.getExternalStorageDirectory();
         wavFile = new File(externalStorage.getAbsolutePath() , "/thisismine.wav");
 
-        eManager = new ExampleManager();
+        eManager = new ExampleManager(this.getApplicationContext());
 
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -263,6 +264,20 @@ public class PitchActivity extends AppCompatActivity {
         // rotate domain labels 45 degrees to make them more compact horizontally:
         plot.getGraphWidget().setDomainLabelOrientation(-45);
 
+    }
+
+    private static void CopyStream(InputStream is, OutputStream os) {
+        final int buffer_size = 1024;
+        try {
+            byte[] bytes = new byte[buffer_size];
+            for (;;) {
+                int count = is.read(bytes, 0, buffer_size);
+                if (count == -1)
+                    break;
+                os.write(bytes, 0, count);
+            }
+        } catch (Exception ex) {
+        }
     }
 
 }

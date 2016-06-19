@@ -1,5 +1,7 @@
 package com.poly.ejiek.pitcher;
 
+import android.content.Context;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
@@ -9,7 +11,7 @@ import java.util.ArrayList;
 public class ExampleManager {
     ArrayList<Example> examples;
 
-    public ExampleManager() {
+    public ExampleManager(Context mainContext) {
         examples = new ArrayList<>();
         Example example;
 
@@ -20,7 +22,7 @@ public class ExampleManager {
                 String name = fields[i].getName();
                 int resourceID = 0;
                 resourceID = fields[i].getInt(fields[i]);
-                example = new Example(name, resourceID);
+                example = new Example(name, resourceID, mainContext);
                 examples.add(example);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();

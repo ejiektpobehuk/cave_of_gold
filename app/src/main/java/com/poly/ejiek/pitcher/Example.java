@@ -1,8 +1,20 @@
 package com.poly.ejiek.pitcher;
 
 import android.Manifest;
+import android.content.Context;
+import android.net.Uri;
+import android.os.Environment;
 import android.os.Parcel;
 import android.os.Parcelable;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 
 /**
  * Created by ejiek on 6/17/16.
@@ -10,14 +22,17 @@ import android.os.Parcelable;
 public class Example implements Parcelable {
     private String name;
     private int resourceID;
+    private Context mainContext;
 
-    public Example(String name, int resourceID){
+    public Example(String name, int resourceID, Context mainContext){
         this.name = name;
         this.resourceID = resourceID;
+        this.mainContext = mainContext;
     }
 
     public String getName() {
         return name.replace('_', ' ');
+
     }
 
     public int getResourceID() {
@@ -25,7 +40,40 @@ public class Example implements Parcelable {
     }
 
     public String getPath() {
-        return String.format("android.resource://%s/%s", MainActivity.PACKAGE_NAME, name);
+        InputStream fis = null;
+        try {
+            fis = mainContext.getApplicationContext().getResources().openRawResource(resourceID);
+            java.io.File oFile = new java.io.File((mainContext.getFileStreamPath(name+".wav").getPath()));
+            OutputStream os = new FileOutputStream(oFile);
+            CopyStream(fis, os);
+            fis.close();
+            os.close();
+            Uri uri = Uri.fromFile(oFile);
+            return uri.toString();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private static void CopyStream(InputStream is, OutputStream os) {
+        final int buffer_size = 1024;
+        try {
+            byte[] bytes = new byte[buffer_size];
+            for (;;) {
+                int count = is.read(bytes, 0, buffer_size);
+                if (count == -1)
+                    break;
+                os.write(bytes, 0, count);
+            }
+        } catch (Exception ex) {
+        }
+    }
+
+    public void setContext(Context mainContext) {
+        this.mainContext = mainContext;
     }
 
     @Override
