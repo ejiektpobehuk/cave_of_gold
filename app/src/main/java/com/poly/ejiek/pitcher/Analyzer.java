@@ -19,13 +19,11 @@ public class Analyzer {
 
 
     private Thread rec;
-    private int micCurrentNullBlock = 1;
-    private float micPreviosPitch = 0;
+    private int micCurrentNullBlock;
+    private float micPreviosPitch;
     private boolean firstPitch = true;
-    private int timeCorrection = 0;
+    private int timeCorrection;
     private Sample micSample;
-    private int micNulls = 0;
-    private int micMaxNullBlock = 1;
 
     private PitchProcessor.PitchEstimationAlgorithm algorithm = PitchProcessor.PitchEstimationAlgorithm.YIN;;
     private boolean micFirstPitch = true;
@@ -33,6 +31,9 @@ public class Analyzer {
 
     public void startMicSample(){
         micSample = new Sample();
+        timeCorrection = 0;
+        micCurrentNullBlock = 1;
+        micPreviosPitch = 0;
 
         micDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
         PitchDetectionHandler mpdh = new PitchDetectionHandler() {
@@ -48,11 +49,11 @@ public class Analyzer {
                     micSample.addX((int) (timeStamp * 10 + 0.5d) - micTimeCorrection);
                     micSample.addY((int) (pitchInHz + 0.5f));
                 } else {
-                    micNulls++;
+                    micSample.setNulls(micSample.getNulls()+1);
                     if (micPreviosPitch == -1) {
                         micCurrentNullBlock++;
-                        if (micCurrentNullBlock > micMaxNullBlock)
-                            micMaxNullBlock = micCurrentNullBlock;
+                        if (micCurrentNullBlock > micSample.getMaxNullBlock())
+                            micSample.setMaxNullBlock(micCurrentNullBlock);
                     } else {
                         micCurrentNullBlock = 1;
                     }
@@ -67,8 +68,6 @@ public class Analyzer {
 
     public void micStop(){
         micDispatcher.stop();
-        micSample.setNulls(micNulls);
-        micSample.setMaxNullBlock(micMaxNullBlock);
     }
 
     public Sample getMicSample(){

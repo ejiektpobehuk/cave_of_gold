@@ -1,53 +1,30 @@
 package com.poly.ejiek.pitcher;
 
-import android.media.AudioManager;
+import android.content.Intent;
+import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
-import android.widget.TextView;
 
-import be.tarsos.dsp.AudioProcessor;
-import be.tarsos.dsp.io.android.AndroidAudioPlayer;
-import be.tarsos.dsp.pitch.PitchDetector;
-import be.tarsos.dsp.AudioDispatcher;
-import be.tarsos.dsp.AudioEvent;
-import be.tarsos.dsp.io.android.AudioDispatcherFactory;
-import be.tarsos.dsp.io.android.AndroidFFMPEGLocator;
-import be.tarsos.dsp.pitch.PitchDetectionHandler;
-import be.tarsos.dsp.pitch.PitchDetectionResult;
-import be.tarsos.dsp.pitch.PitchProcessor;
-import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
-
-import android.graphics.DashPathEffect;
-import com.androidplot.util.PixelUtils;
-import com.androidplot.xy.SimpleXYSeries;
-import com.androidplot.xy.XYSeries;
-import com.androidplot.xy.*;
+import com.androidplot.xy.XYPlot;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 
-import android.media.MediaPlayer;
-import android.os.Bundle;
-import android.app.Activity;
-import android.view.Menu;
-import android.view.View;
-import android.widget.Button;
-import android.widget.Toast;
+import be.tarsos.dsp.AudioDispatcher;
+import be.tarsos.dsp.io.android.AndroidFFMPEGLocator;
 
 public class MainActivity extends AppCompatActivity{
+
+    public static String PACKAGE_NAME;
 
     private XYPlot plot;
     private MediaPlayer mp;
@@ -80,25 +57,11 @@ public class MainActivity extends AppCompatActivity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         new AndroidFFMPEGLocator(this);
-        setAlgthToSpinner();
 
-        analyzer = new Analyzer();
-
-        EditText etSampleRate = (EditText) findViewById(R.id.editSampRate);
-        EditText etBufSize = (EditText) findViewById(R.id.editBufSize);
-
-        sampleRate = Float.parseFloat(etSampleRate.getText().toString());
-        bufferSize = Integer.parseInt(etBufSize.getText().toString());
-
-        X = new ArrayList<>();
-        Y = new ArrayList<>();
-
-        mp = MediaPlayer.create(this, R.raw.thisismine);
-
-        File externalStorage = Environment.getExternalStorageDirectory();
-        wavFile = new File(externalStorage.getAbsolutePath() , "/thisismine.wav");
+        PACKAGE_NAME = getPackageName();
 
         eManager = new ExampleManager();
+        createButtons();
 
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -115,104 +78,26 @@ public class MainActivity extends AppCompatActivity{
         });
     }
 
-    private void setAlgthToSpinner() {
-        Spinner algSpinner = (Spinner) findViewById(R.id.spinner);
-        ArrayList<String> spinnerArray = new ArrayList<String>();
+    private void createButtons() {
+        ArrayList<Example> examples = eManager.getExamples();
 
-        for (PitchEstimationAlgorithm alg : PitchEstimationAlgorithm.values())
-                spinnerArray.add(alg.toString());
-
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, spinnerArray); //selected item will look like a spinner set from XML
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        algSpinner.setAdapter(adapter);
-        algSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-                        analyzer.setAlgorithm(PitchEstimationAlgorithm.valueOf(parent.getItemAtPosition(pos).toString()));
-                }
-
-                public void onNothingSelected(AdapterView<?> arg0) {
-
+        for (final Example exmpl : examples){
+            Button myButton = new Button(this);
+            myButton.setText(exmpl.getName());
+            myButton.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View view) {
+                    //mp = MediaPlayer.create(MainActivity.this, exmpl.getResourceID());
+                    //mp.start();
+                    Intent intent = new Intent(MainActivity.this, PitchActivity.class);
+                    intent.putExtra("Example", exmpl);
+                    startActivity(intent);
                 }
             });
 
-    }
-
-    public void buttonOnCLick(View v){
-        dispatcher = AudioDispatcherFactory.fromPipe(wavFile.getAbsolutePath(),(int)sampleRate,bufferSize,0);
-
-        nativeWipe();
-
-        PitchDetectionHandler pdh = new PitchDetectionHandler() {
-            @Override
-            public void handlePitch(PitchDetectionResult result, final AudioEvent audioEvent) {
-                final float pitchInHz = result.getPitch();
-                //setContentView(R.layout.activity_main);
-                if(pitchInHz != -1) {
-                    if(firstPitch){
-                        timeCorrection = (int)(audioEvent.getTimeStamp()*10 +0.5d);
-                        firstPitch = false;
-                    }                    double timeStamp = audioEvent.getTimeStamp();
-                    X.add((int) (timeStamp*10 + 0.5d) - timeCorrection);
-                    Y.add((int) (pitchInHz + 0.5f));
-                }else {
-                    nulls++;
-                    if (previosPitch == -1){
-                        currentNullBlock++;
-                        if (currentNullBlock > maxNullBlock) maxNullBlock = currentNullBlock;
-                    }else{
-                        currentNullBlock = 1;
-                    }
-                }
-                previosPitch = pitchInHz;
-            }
-        };
-        AudioProcessor p = new PitchProcessor(analyzer.getAlgorithm(), sampleRate, bufferSize, pdh);
-
-        dispatcher.addAudioProcessor(p);
-        new Thread(dispatcher,"Audio Dispatcher").start();
-        mp.start();
-
-    }
-
-    public void button2OnCLick(View v){
-        Button button=(Button) v;
-
-        setContentView(R.layout.activity_main);
-        TextView text = (TextView) findViewById(R.id.result);
-        text.setText("Dots: " + X.size()+ "; Nulls: "+ nulls + "; max Null Block: " + maxNullBlock);
-        TextView micText = (TextView) findViewById(R.id.micResult);
-        micText.setText("Dots: " + micSample.getSizeX()+ "; Nulls: "+ micSample.getNulls() + "; max Null Block: " + micSample.getMaxNullBlock());
-        plot();
-    }
-
-    public void listenButtonOnCLick(View v){
-        Button button=(Button) v;
-
-        if(isListening == false) {
-            analyzer.startMicSample();
-            isListening = true;
-            button.setText("Stop");
-        }else {
-            isListening = false;
-            analyzer.micStop();
-            micSample = analyzer.getMicSample();
-            button.setText("Listen");
-            //plot();
+            LinearLayout ll = (LinearLayout)findViewById(R.id.buttonslayout);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            ll.addView(myButton, lp);
         }
-
-    }
-
-    private void nativeWipe() {
-        nulls = 0;
-        currentNullBlock = 1;
-        maxNullBlock = 1;
-        previosPitch = 0;
-        firstPitch = true;
-        X.clear();
-        Y.clear();
-        X = new ArrayList<>();
-        Y = new ArrayList<>();
     }
 
     @Override
@@ -237,56 +122,4 @@ public class MainActivity extends AppCompatActivity{
         return super.onOptionsItemSelected(item);
     }
 
-    public void plot(){
-        // initialize our XYPlot reference:
-        plot = (XYPlot) findViewById(R.id.plot);
-
-        // create a couple arrays of y-values to plot:
-        if(Y.size()>0){
-            Integer[] intObj = new Integer[Y.size()+X.size()];
-            for (int i=0; i < Y.size(); i++) {
-                intObj[i*2] = Integer.valueOf(X.get(i));
-                intObj[i*2+1] = Integer.valueOf(Y.get(i));
-            }
-
-            Number[] series1Numbers = (Number[])intObj;
-
-
-            XYSeries series1 = new SimpleXYSeries(Arrays.asList(series1Numbers),
-                    SimpleXYSeries.ArrayFormat.XY_VALS_INTERLEAVED, "Series1");
-
-            LineAndPointFormatter series1Format = new LineAndPointFormatter();
-            series1Format.setPointLabelFormatter(new PointLabelFormatter());
-            series1Format.configure(getApplicationContext(),
-                    R.xml.line_point_formatter_with_labels);
-
-
-            plot.addSeries(series1, series1Format);
-        }
-
-        if(!micSample.isEmpty()){
-            Number[] series2Numbers = (Number[])micSample.interleave();
-
-            XYSeries series2 = new SimpleXYSeries(Arrays.asList(series2Numbers),
-                    SimpleXYSeries.ArrayFormat.XY_VALS_INTERLEAVED, "Series2");
-
-            LineAndPointFormatter series2Format = new LineAndPointFormatter();
-            series2Format.setPointLabelFormatter(new PointLabelFormatter());
-            series2Format.configure(getApplicationContext(),
-                    R.xml.line_point_formatter_with_labels_2);
-
-
-            plot.addSeries(series2, series2Format);
-        }
-
-
-        // add a new series' to the xyplot:
-
-        // reduce the number of range labels
-        plot.setTicksPerRangeLabel(3);
-
-        // rotate domain labels 45 degrees to make them more compact horizontally:
-        plot.getGraphWidget().setDomainLabelOrientation(-45);
-
-    }
 }
