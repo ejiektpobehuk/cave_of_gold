@@ -14,24 +14,41 @@ import be.tarsos.dsp.pitch.PitchProcessor;
  * Created by ejiek on 6/18/16.
  */
 public class Analyzer {
-    private AudioDispatcher micDispatcher;
+    private AudioDispatcher dispatcher;
 
-    private int micCurrentNullBlock;
-    private float micPreviosPitch;
+    private int currentNullBlock;
+    private float previosPitch;
     private boolean firstPitch = true;
     private int timeCorrection = 0;
-    private Sample micSample;
+    private Sample sample;
 
     private PitchProcessor.PitchEstimationAlgorithm algorithm = PitchProcessor.PitchEstimationAlgorithm.YIN;
 
     public void startMicSample(){
-        micSample = new Sample();
-        timeCorrection = 0;
-        micCurrentNullBlock = 1;
-        micPreviosPitch = 0;
+        dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
+        startSample(22050, 1024);
+    }
 
-        micDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
-        PitchDetectionHandler mpdh = new PitchDetectionHandler() {
+    public void micStop(){
+        dispatcher.stop();
+    }
+
+    public Sample getSample(){
+        return sample;
+    }
+    
+    public Sample startFileSample(Example example, float sampleRate, int bufferSize){
+        dispatcher = AudioDispatcherFactory.fromPipe(example.getPath(),(int)sampleRate,bufferSize,0);
+        return startSample(sampleRate,bufferSize);
+    }
+
+    private Sample startSample(float sampleRate, int bufferSize){
+        sample = new Sample();
+        timeCorrection = 0;
+        currentNullBlock = 1;
+        previosPitch = 0;
+
+        PitchDetectionHandler pdh = new PitchDetectionHandler() {
             @Override
             public void handlePitch(PitchDetectionResult result, final AudioEvent audioEvent) {
                 final float pitchInHz = result.getPitch();
@@ -41,32 +58,32 @@ public class Analyzer {
                         firstPitch = false;
                     }
                     double timeStamp = audioEvent.getTimeStamp();
-                    micSample.addX((int) (timeStamp * 10 + 0.5d) - timeCorrection);
-                    micSample.addY((int) (pitchInHz + 0.5f));
+                    sample.addX((int) (timeStamp * 10 + 0.5d) - timeCorrection);
+                    sample.addY((int) (pitchInHz + 0.5f));
                 } else {
-                    micSample.setNulls(micSample.getNulls()+1);
-                    if (micPreviosPitch == -1) {
-                        micCurrentNullBlock++;
-                        if (micCurrentNullBlock > micSample.getMaxNullBlock())
-                            micSample.setMaxNullBlock(micCurrentNullBlock);
+                    sample.setNulls(sample.getNulls()+1);
+                    if (previosPitch == -1) {
+                        currentNullBlock++;
+                        if (currentNullBlock > sample.getMaxNullBlock())
+                            sample.setMaxNullBlock(currentNullBlock);
                     } else {
-                        micCurrentNullBlock = 1;
+                        currentNullBlock = 1;
                     }
                 }
-                micPreviosPitch = pitchInHz;
+                previosPitch = pitchInHz;
             }
         };
-        AudioProcessor mp = new PitchProcessor(algorithm, 22050, 1024, mpdh);
-        micDispatcher.addAudioProcessor(mp);
-        new Thread(micDispatcher,"Audio Dispatcher").start();
-    }
-
-    public void micStop(){
-        micDispatcher.stop();
-    }
-
-    public Sample getMicSample(){
-        return micSample;
+        AudioProcessor mp = new PitchProcessor(algorithm, sampleRate, bufferSize, pdh);
+        dispatcher.addAudioProcessor(mp);
+        Thread analizer = new Thread(dispatcher,"Audio Dispatcher");
+        analizer.start();
+        try {
+            analizer.join(100);
+            return sample;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public PitchProcessor.PitchEstimationAlgorithm getAlgorithm(){

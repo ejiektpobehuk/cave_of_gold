@@ -47,24 +47,11 @@ public class PitchActivity extends AppCompatActivity {
     private Analyzer analyzer;
     private Sample nativeSample;
     private Sample micSample;
-    private boolean firstPitch = true;
-    private AudioDispatcher dispatcher;
-    private int timeCorrection = 0;
-
-    private ArrayList<Integer> X;
-    private ArrayList<Integer> Y;
-    private int nulls = 0;
-    private int currentNullBlock = 1;
-    private int maxNullBlock = 1;
-    private float previosPitch = 0;
 
     private boolean isListening = false;
 
-    private ExampleManager eManager;
     private float sampleRate = 44100;
     private int bufferSize = 1024;
-
-    private File wavFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,13 +73,7 @@ public class PitchActivity extends AppCompatActivity {
         sampleRate = Float.parseFloat(etSampleRate.getText().toString());
         bufferSize = Integer.parseInt(etBufSize.getText().toString());
 
-        X = new ArrayList<>();
-        Y = new ArrayList<>();
-
         mp = MediaPlayer.create(this, example.getResourceID());
-
-        eManager = new ExampleManager(this.getApplicationContext());
-
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -128,59 +109,16 @@ public class PitchActivity extends AppCompatActivity {
     }
 
     public void buttonOnCLick(View v){
-        dispatcher = AudioDispatcherFactory.fromPipe(example.getPath(),(int)sampleRate,bufferSize,0);
-        nativeWipe();
-
-        PitchDetectionHandler pdh = new PitchDetectionHandler() {
-            @Override
-            public void handlePitch(PitchDetectionResult result, final AudioEvent audioEvent) {
-                final float pitchInHz = result.getPitch();
-                //setContentView(R.layout.activity_main);
-                if(pitchInHz != -1) {
-                    if(firstPitch){
-                        timeCorrection = (int)(audioEvent.getTimeStamp()*10 +0.5d);
-                        firstPitch = false;
-                    }                    double timeStamp = audioEvent.getTimeStamp();
-                    X.add((int) (timeStamp*10 + 0.5d) - timeCorrection);
-                    Y.add((int) (pitchInHz + 0.5f));
-                }else {
-                    nulls++;
-                    if (previosPitch == -1){
-                        currentNullBlock++;
-                        if (currentNullBlock > maxNullBlock) maxNullBlock = currentNullBlock;
-                    }else{
-                        currentNullBlock = 1;
-                    }
-                }
-                previosPitch = pitchInHz;
-            }
-        };
-        AudioProcessor p = new PitchProcessor(analyzer.getAlgorithm(), sampleRate, bufferSize, pdh);
-
-        dispatcher.addAudioProcessor(p);
-        new Thread(dispatcher,"Audio Dispatcher").start();
+        nativeSample = analyzer.startFileSample(example,sampleRate,bufferSize);
         mp.start();
 
     }
 
-    private void nativeWipe() {
-        nulls = 0;
-        currentNullBlock = 1;
-        maxNullBlock = 1;
-        previosPitch = 0;
-        firstPitch = true;
-        X.clear();
-        Y.clear();
-        X = new ArrayList<>();
-        Y = new ArrayList<>();
-    }
-
     public void button2OnCLick(View v){
         Button button=(Button) v;
-
         setContentView(R.layout.activity_pitch);
         TextView text = (TextView) findViewById(R.id.result);
-        text.setText("Dots: " + X.size()+ "; Nulls: "+ nulls + "; max Null Block: " + maxNullBlock);
+        text.setText("Dots: " + nativeSample.getSizeX()+ "; Nulls: "+ nativeSample.getNulls() + "; max Null Block: " + nativeSample.getMaxNullBlock());
         TextView micText = (TextView) findViewById(R.id.micResult);
         if(micSample!=null){
             micText.setText("Dots: " + micSample.getSizeX()+ "; Nulls: "+ micSample.getNulls() + "; max Null Block: " + micSample.getMaxNullBlock());
@@ -198,7 +136,7 @@ public class PitchActivity extends AppCompatActivity {
         }else {
             isListening = false;
             analyzer.micStop();
-            micSample = analyzer.getMicSample();
+            micSample = analyzer.getSample();
             button.setText("Listen");
             //plot();
         }
@@ -210,14 +148,9 @@ public class PitchActivity extends AppCompatActivity {
         plot = (XYPlot) findViewById(R.id.plot);
 
         // create a couple arrays of y-values to plot:
-        if(Y.size()>0){
-            Integer[] intObj = new Integer[Y.size()+X.size()];
-            for (int i=0; i < Y.size(); i++) {
-                intObj[i*2] = Integer.valueOf(X.get(i));
-                intObj[i*2+1] = Integer.valueOf(Y.get(i));
-            }
+        if(nativeSample!=null){
 
-            Number[] series1Numbers = (Number[])intObj;
+            Number[] series1Numbers = (Number[])nativeSample.interleave();
 
 
             XYSeries series1 = new SimpleXYSeries(Arrays.asList(series1Numbers),
