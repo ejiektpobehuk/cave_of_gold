@@ -1,7 +1,5 @@
 package com.poly.ejiek.pitcher;
 
-import java.util.ArrayList;
-
 import be.tarsos.dsp.AudioDispatcher;
 import be.tarsos.dsp.AudioEvent;
 import be.tarsos.dsp.AudioProcessor;
@@ -10,9 +8,7 @@ import be.tarsos.dsp.pitch.PitchDetectionHandler;
 import be.tarsos.dsp.pitch.PitchDetectionResult;
 import be.tarsos.dsp.pitch.PitchProcessor;
 
-/**
- * Created by ejiek on 6/18/16.
- */
+
 public class Analyzer {
     private AudioDispatcher dispatcher;
 
@@ -86,10 +82,6 @@ public class Analyzer {
         dispatcher.addAudioProcessor(mp);
         analizer = new Thread(dispatcher,"Audio Dispatcher");
         analizer.start();
-    }
-
-    public PitchProcessor.PitchEstimationAlgorithm getAlgorithm(){
-        return algorithm;
     }
 
     public void setAlgorithm(PitchProcessor.PitchEstimationAlgorithm algorithm){
