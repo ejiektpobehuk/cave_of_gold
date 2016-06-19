@@ -52,6 +52,13 @@
                 android:id="@+id/mic_button"
                 android:onClick="micButtonOnCLick" />
 
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="play"
+                android:id="@+id/play_button"
+                android:onClick="playButtonOnCLick" />
+
         </LinearLayout>
     </LinearLayout>
 

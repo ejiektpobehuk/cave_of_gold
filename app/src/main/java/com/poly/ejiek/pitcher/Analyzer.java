@@ -46,6 +46,18 @@ public class Analyzer {
         return null;
     }
 
+    public Sample startFileSample(String path, float sampleRate, int bufferSize){
+        dispatcher = AudioDispatcherFactory.fromPipe(path,(int)sampleRate,bufferSize,0);
+        startSample(sampleRate,bufferSize);
+        try {
+            analizer.join();
+            return sample;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     private void startSample(float sampleRate, int bufferSize){
         sample = new Sample();
         timeCorrection = 0;

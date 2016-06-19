@@ -3,6 +3,7 @@ package com.poly.ejiek.pitcher;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.MediaPlayer;
+import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
@@ -20,6 +21,7 @@ import com.androidplot.xy.SimpleXYSeries;
 import com.androidplot.xy.XYPlot;
 import com.androidplot.xy.XYSeries;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -42,6 +44,9 @@ public class PitchActivity extends AppCompatActivity {
 
     private float sampleRate;
     private int bufferSize;
+
+    private MediaRecorder audioRecorder;
+    private String recordFile = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +72,9 @@ public class PitchActivity extends AppCompatActivity {
         showSnack(nativeSample, "file");
 
         plot();
+
+
+        recordFile = this.getFileStreamPath("voice_record.wav").getPath();
     }
 
     private void setAlgthToSpinner() {
@@ -101,19 +109,47 @@ public class PitchActivity extends AppCompatActivity {
         Button button = (Button) v;
 
         if (isListening == false) {
-            analyzer.startMicSample();
+            audioRecorder = new MediaRecorder();
+            audioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            audioRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            audioRecorder.setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB);
+            audioRecorder.setOutputFile(recordFile);
+            try {
+                audioRecorder.prepare();
+                audioRecorder.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            //analyzer.startMicSample();
             isListening = true;
             button.setText("Stop");
         } else {
             isListening = false;
-            analyzer.micStop();
-            micSample = analyzer.getSample();
+            //analyzer.micStop();
+            audioRecorder.stop();
+            audioRecorder.release();
+            //micSample = analyzer.getSample();
+            micSample = analyzer.startFileSample(recordFile, sampleRate, bufferSize);
             button.setText("Record");
             setContentView(R.layout.activity_pitch);
             showSnack(micSample, "mic");
             plot();
         }
 
+    }
+
+    public void playButtonOnCLick(View v) {
+        Button button = (Button) v;
+        MediaPlayer m = new MediaPlayer();
+
+        try {
+            m.setDataSource(recordFile);
+            m.prepare();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        m.start();
     }
 
     public void plot() {
