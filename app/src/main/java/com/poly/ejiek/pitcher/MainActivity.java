@@ -2,10 +2,8 @@ package com.poly.ejiek.pitcher;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -17,45 +15,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.Spinner;
-
-import com.androidplot.xy.XYPlot;
-
-import java.io.File;
 import java.util.ArrayList;
 
-import be.tarsos.dsp.AudioDispatcher;
 import be.tarsos.dsp.io.android.AndroidFFMPEGLocator;
 
 public class MainActivity extends AppCompatActivity{
 
     public static String PACKAGE_NAME;
 
-    private XYPlot plot;
-    private MediaPlayer mp;
-    private Spinner algSpinner;
-
-    private Analyzer analyzer;
-    private Sample nativeSample;
-    private Sample micSample;
-    private boolean firstPitch = true;
-    private AudioDispatcher dispatcher;
-    private int timeCorrection = 0;
-
-    private ArrayList<Integer> X;
-    private ArrayList<Integer> Y;
-    private int nulls = 0;
-    private int currentNullBlock = 1;
-    private int maxNullBlock = 1;
-    private float previosPitch = 0;
-
-    private boolean isListening = false;
-
     private ExampleManager eManager;
-    private float sampleRate = 44100;
-    private int bufferSize = 1024;
-
-    private File wavFile;
 
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = {
@@ -96,8 +64,6 @@ public class MainActivity extends AppCompatActivity{
             myButton.setText(exmpl.getName());
             myButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View view) {
-                    //mp = MediaPlayer.create(MainActivity.this, exmpl.getResourceID());
-                    //mp.start();
                     Intent intent = new Intent(MainActivity.this, PitchActivity.class);
                     intent.putExtra("Example", exmpl);
                     startActivity(intent);

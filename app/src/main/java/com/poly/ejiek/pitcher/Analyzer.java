@@ -16,18 +16,13 @@ import be.tarsos.dsp.pitch.PitchProcessor;
 public class Analyzer {
     private AudioDispatcher micDispatcher;
 
-
-
-    private Thread rec;
     private int micCurrentNullBlock;
     private float micPreviosPitch;
     private boolean firstPitch = true;
-    private int timeCorrection;
+    private int timeCorrection = 0;
     private Sample micSample;
 
-    private PitchProcessor.PitchEstimationAlgorithm algorithm = PitchProcessor.PitchEstimationAlgorithm.YIN;;
-    private boolean micFirstPitch = true;
-    private int micTimeCorrection = 0;
+    private PitchProcessor.PitchEstimationAlgorithm algorithm = PitchProcessor.PitchEstimationAlgorithm.YIN;
 
     public void startMicSample(){
         micSample = new Sample();
@@ -41,12 +36,12 @@ public class Analyzer {
             public void handlePitch(PitchDetectionResult result, final AudioEvent audioEvent) {
                 final float pitchInHz = result.getPitch();
                 if (pitchInHz != -1) {
-                    if(micFirstPitch){
-                        micTimeCorrection = (int)(audioEvent.getTimeStamp()*10 +0.5d);
-                        micFirstPitch = false;
+                    if(firstPitch){
+                        timeCorrection = (int)(audioEvent.getTimeStamp()*10 +0.5d);
+                        firstPitch = false;
                     }
                     double timeStamp = audioEvent.getTimeStamp();
-                    micSample.addX((int) (timeStamp * 10 + 0.5d) - micTimeCorrection);
+                    micSample.addX((int) (timeStamp * 10 + 0.5d) - timeCorrection);
                     micSample.addY((int) (pitchInHz + 0.5f));
                 } else {
                     micSample.setNulls(micSample.getNulls()+1);

@@ -1,19 +1,14 @@
 package com.poly.ejiek.pitcher;
 
-import android.Manifest;
 import android.content.Context;
 import android.net.Uri;
-import android.os.Environment;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 
 /**

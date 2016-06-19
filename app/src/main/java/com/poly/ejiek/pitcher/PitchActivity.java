@@ -25,11 +25,6 @@ import com.androidplot.xy.XYPlot;
 import com.androidplot.xy.XYSeries;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -96,9 +91,6 @@ public class PitchActivity extends AppCompatActivity {
 
         mp = MediaPlayer.create(this, example.getResourceID());
 
-        File externalStorage = Environment.getExternalStorageDirectory();
-        wavFile = new File(externalStorage.getAbsolutePath() , "/thisismine.wav");
-
         eManager = new ExampleManager(this.getApplicationContext());
 
 
@@ -113,7 +105,7 @@ public class PitchActivity extends AppCompatActivity {
     }
 
     private void setAlgthToSpinner() {
-        Spinner algSpinner = (Spinner) findViewById(R.id.spinner);
+        algSpinner = (Spinner) findViewById(R.id.spinner);
         ArrayList<String> spinnerArray = new ArrayList<String>();
 
         for (PitchProcessor.PitchEstimationAlgorithm alg : PitchProcessor.PitchEstimationAlgorithm.values())
@@ -264,20 +256,6 @@ public class PitchActivity extends AppCompatActivity {
         // rotate domain labels 45 degrees to make them more compact horizontally:
         plot.getGraphWidget().setDomainLabelOrientation(-45);
 
-    }
-
-    private static void CopyStream(InputStream is, OutputStream os) {
-        final int buffer_size = 1024;
-        try {
-            byte[] bytes = new byte[buffer_size];
-            for (;;) {
-                int count = is.read(bytes, 0, buffer_size);
-                if (count == -1)
-                    break;
-                os.write(bytes, 0, count);
-            }
-        } catch (Exception ex) {
-        }
     }
 
 }
