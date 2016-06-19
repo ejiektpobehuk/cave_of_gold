@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- file analyzer settings -->
+    <integer name="pref_default_sample_rate">44100</integer>
+    <integer name="pref_default_buffer_size">1024</integer>
+
+    <!-- mic analyzer settings -->
+    <integer name="pref_default_ma_sample_rate">22050</integer>
+    <integer name="pref_default_ma_buffer_size">1024</integer>
+</resources>

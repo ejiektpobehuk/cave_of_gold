@@ -1,0 +1,9 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="show_mic_analizer_debug"
+        android:summary="@string/pref_description_debug"
+        android:title="@string/pref_title_debug" />
+
+</PreferenceScreen>

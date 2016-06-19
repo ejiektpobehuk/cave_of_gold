@@ -1,0 +1,25 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- NOTE: EditTextPreference accepts EditText attributes. -->
+    <!-- NOTE: EditTextPreference's summary should be set to its value by the activity code. -->
+    <EditTextPreference
+        android:inputType="numberDecimal"
+        android:ems="10"
+        android:defaultValue="@integer/pref_default_ma_sample_rate"
+        android:key="mic_sample_rate"
+        android:maxLines="1"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:title="@string/pref_title_sample_rate" />
+
+    <EditTextPreference
+        android:inputType="numberDecimal"
+        android:ems="10"
+        android:defaultValue="@integer/pref_default_ma_buffer_size"
+        android:key="mic_buffer_size"
+        android:maxLines="1"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:title="@string/pref_title_buffer_size" />
+
+</PreferenceScreen>

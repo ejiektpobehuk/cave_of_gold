@@ -22,38 +22,12 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <Button
-                android:layout_width="wrap_content"
+            <Spinner
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Native"
-                android:id="@+id/button"
-                android:layout_alignParentStart="true"
-                android:onClick="buttonOnCLick" />
-
-            <EditText
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:inputType="numberDecimal"
-                android:ems="10"
-                android:id="@+id/editSampRate"
-                android:text="44100" />
-
-            <EditText
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:inputType="numberDecimal"
-                android:ems="10"
-                android:id="@+id/editBufSize"
-                android:layout_weight="1"
-                android:text="1024" />
-
+                android:id="@+id/spinner"
+                android:layout_weight="1" />
         </LinearLayout>
-
-        <Spinner
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/spinner"
-            android:layout_weight="1" />
 
         <include layout="@layout/scatter_plot" />
 
@@ -85,6 +59,14 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="Native"
+                android:id="@+id/button"
+                android:layout_alignParentStart="true"
+                android:onClick="buttonOnCLick" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:text="show"
                 android:id="@+id/button_show"
                 android:onClick="button2OnCLick"/>
@@ -96,11 +78,6 @@
                 android:id="@+id/button3"
                 android:onClick="listenButtonOnCLick" />
 
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="New Button"
-                android:id="@+id/button4" />
         </LinearLayout>
     </LinearLayout>
 

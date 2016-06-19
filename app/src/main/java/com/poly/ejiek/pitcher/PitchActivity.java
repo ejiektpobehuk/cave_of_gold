@@ -1,11 +1,10 @@
 package com.poly.ejiek.pitcher;
 
-import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -24,17 +23,11 @@ import com.androidplot.xy.SimpleXYSeries;
 import com.androidplot.xy.XYPlot;
 import com.androidplot.xy.XYSeries;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import be.tarsos.dsp.AudioDispatcher;
-import be.tarsos.dsp.AudioEvent;
-import be.tarsos.dsp.AudioProcessor;
-import be.tarsos.dsp.io.android.AudioDispatcherFactory;
-import be.tarsos.dsp.pitch.PitchDetectionHandler;
-import be.tarsos.dsp.pitch.PitchDetectionResult;
 import be.tarsos.dsp.pitch.PitchProcessor;
+
 
 
 public class PitchActivity extends AppCompatActivity {
@@ -43,6 +36,7 @@ public class PitchActivity extends AppCompatActivity {
     private MediaPlayer mp;
     private Spinner algSpinner;
     private Example example;
+    private SharedPreferences prefs;
 
     private Analyzer analyzer;
     private Sample nativeSample;
@@ -50,15 +44,25 @@ public class PitchActivity extends AppCompatActivity {
 
     private boolean isListening = false;
 
-    private float sampleRate = 44100;
-    private int bufferSize = 1024;
+    private float sampleRate;
+    private int bufferSize;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        sampleRate = Float.parseFloat(prefs.getString("sample_rate", "44100"));
+        bufferSize = Integer.parseInt(prefs.getString("buffer_size", "1024"));
+
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pitch);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
         Intent intent = getIntent();
         example = (Example) intent.getParcelableExtra("Example");
@@ -68,27 +72,17 @@ public class PitchActivity extends AppCompatActivity {
         analyzer = new Analyzer();
         nativeSample = analyzer.startFileSample(example,sampleRate,bufferSize);
 
-
-        EditText etSampleRate = (EditText) findViewById(R.id.editSampRate);
-        EditText etBufSize = (EditText) findViewById(R.id.editBufSize);
-
-        sampleRate = Float.parseFloat(etSampleRate.getText().toString());
-        bufferSize = Integer.parseInt(etBufSize.getText().toString());
-
         mp = MediaPlayer.create(this, example.getResourceID());
 
+        Snackbar.make(findViewById(R.id.fab), "File! Dots: " + nativeSample.getSizeX()+ "; Nulls: "+ nativeSample.getNulls() + "; max Null Block: " + nativeSample.getMaxNullBlock(), Snackbar.LENGTH_LONG)
+                .setAction("Action", null).show();
 
-        TextView text = (TextView) findViewById(R.id.result);
-        text.setText("Dots: " + nativeSample.getSizeX()+ "; Nulls: "+ nativeSample.getNulls() + "; max Null Block: " + nativeSample.getMaxNullBlock());
         plot();
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+
+        TextView micText = (TextView) findViewById(R.id.micResult);
+        micText.setText("Test: " + sampleRate +", "+ bufferSize);
+
     }
 
     private void setAlgthToSpinner() {

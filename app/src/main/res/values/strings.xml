@@ -2,4 +2,24 @@
     <string name="app_name">Pitcher</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_pitch">Pitcher</string>
+    <string name="title_activity_settings">Settings</string>
+
+    <!-- Strings related to Settings -->
+
+    <!-- Example General settings -->
+    <string name="pref_header_general">General</string>
+
+
+    <string name="pref_title_debug">Enable analyzer debug</string>
+    <string name="pref_description_debug">Extra(debug) text ouput for pitches</string>
+
+    <!-- file analyzer settings -->
+    <string name="pref_header_file_analyzer">File analyzer</string>
+
+    <string name="pref_title_sample_rate">Sample rate</string>
+    <string name="pref_title_buffer_size">Buffer size</string>
+
+    <!-- mic analyzer settings -->
+    <string name="pref_header_mic_analyzer">Mic analyzer</string>
+
 </resources>
