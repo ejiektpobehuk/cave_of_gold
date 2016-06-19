@@ -66,6 +66,8 @@ public class PitchActivity extends AppCompatActivity {
         setAlgthToSpinner();
 
         analyzer = new Analyzer();
+        nativeSample = analyzer.startFileSample(example,sampleRate,bufferSize);
+
 
         EditText etSampleRate = (EditText) findViewById(R.id.editSampRate);
         EditText etBufSize = (EditText) findViewById(R.id.editBufSize);
@@ -75,6 +77,10 @@ public class PitchActivity extends AppCompatActivity {
 
         mp = MediaPlayer.create(this, example.getResourceID());
 
+
+        TextView text = (TextView) findViewById(R.id.result);
+        text.setText("Dots: " + nativeSample.getSizeX()+ "; Nulls: "+ nativeSample.getNulls() + "; max Null Block: " + nativeSample.getMaxNullBlock());
+        plot();
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -109,7 +115,6 @@ public class PitchActivity extends AppCompatActivity {
     }
 
     public void buttonOnCLick(View v){
-        nativeSample = analyzer.startFileSample(example,sampleRate,bufferSize);
         mp.start();
 
     }

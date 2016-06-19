@@ -21,6 +21,7 @@ public class Analyzer {
     private boolean firstPitch = true;
     private int timeCorrection = 0;
     private Sample sample;
+    private Thread analizer;
 
     private PitchProcessor.PitchEstimationAlgorithm algorithm = PitchProcessor.PitchEstimationAlgorithm.YIN;
 
@@ -39,14 +40,22 @@ public class Analyzer {
     
     public Sample startFileSample(Example example, float sampleRate, int bufferSize){
         dispatcher = AudioDispatcherFactory.fromPipe(example.getPath(),(int)sampleRate,bufferSize,0);
-        return startSample(sampleRate,bufferSize);
+        startSample(sampleRate,bufferSize);
+        try {
+            analizer.join();
+            return sample;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
-    private Sample startSample(float sampleRate, int bufferSize){
+    private void startSample(float sampleRate, int bufferSize){
         sample = new Sample();
         timeCorrection = 0;
         currentNullBlock = 1;
         previosPitch = 0;
+        firstPitch = true;
 
         PitchDetectionHandler pdh = new PitchDetectionHandler() {
             @Override
@@ -75,15 +84,8 @@ public class Analyzer {
         };
         AudioProcessor mp = new PitchProcessor(algorithm, sampleRate, bufferSize, pdh);
         dispatcher.addAudioProcessor(mp);
-        Thread analizer = new Thread(dispatcher,"Audio Dispatcher");
+        analizer = new Thread(dispatcher,"Audio Dispatcher");
         analizer.start();
-        try {
-            analizer.join(100);
-            return sample;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     public PitchProcessor.PitchEstimationAlgorithm getAlgorithm(){
