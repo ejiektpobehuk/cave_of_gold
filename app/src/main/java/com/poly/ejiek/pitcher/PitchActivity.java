@@ -29,7 +29,6 @@ import java.util.Arrays;
 import be.tarsos.dsp.pitch.PitchProcessor;
 
 
-
 public class PitchActivity extends AppCompatActivity {
 
     private XYPlot plot;
@@ -49,20 +48,14 @@ public class PitchActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
-
-
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        sampleRate = Float.parseFloat(prefs.getString("sample_rate", "44100"));
-        bufferSize = Integer.parseInt(prefs.getString("buffer_size", "1024"));
-
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pitch);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        sampleRate = Float.parseFloat(prefs.getString("sample_rate", "44100"));
+        bufferSize = Integer.parseInt(prefs.getString("buffer_size", "1024"));
 
         Intent intent = getIntent();
         example = (Example) intent.getParcelableExtra("Example");
@@ -70,19 +63,13 @@ public class PitchActivity extends AppCompatActivity {
         setAlgthToSpinner();
 
         analyzer = new Analyzer();
-        nativeSample = analyzer.startFileSample(example,sampleRate,bufferSize);
+        nativeSample = analyzer.startFileSample(example, sampleRate, bufferSize);
 
         mp = MediaPlayer.create(this, example.getResourceID());
 
-        Snackbar.make(findViewById(R.id.fab), "File! Dots: " + nativeSample.getSizeX()+ "; Nulls: "+ nativeSample.getNulls() + "; max Null Block: " + nativeSample.getMaxNullBlock(), Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show();
+        showSnack(nativeSample, "file");
 
         plot();
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-
-        TextView micText = (TextView) findViewById(R.id.micResult);
-        micText.setText("Test: " + sampleRate +", "+ bufferSize);
-
     }
 
     private void setAlgthToSpinner() {
@@ -108,48 +95,38 @@ public class PitchActivity extends AppCompatActivity {
 
     }
 
-    public void buttonOnCLick(View v){
+    public void nativeButtonOnCLick(View v) {
         mp.start();
 
     }
 
-    public void button2OnCLick(View v){
-        Button button=(Button) v;
-        setContentView(R.layout.activity_pitch);
-        TextView text = (TextView) findViewById(R.id.result);
-        text.setText("Dots: " + nativeSample.getSizeX()+ "; Nulls: "+ nativeSample.getNulls() + "; max Null Block: " + nativeSample.getMaxNullBlock());
-        TextView micText = (TextView) findViewById(R.id.micResult);
-        if(micSample!=null){
-            micText.setText("Dots: " + micSample.getSizeX()+ "; Nulls: "+ micSample.getNulls() + "; max Null Block: " + micSample.getMaxNullBlock());
-        }
-        plot();
-    }
+    public void micButtonOnCLick(View v) {
+        Button button = (Button) v;
 
-    public void listenButtonOnCLick(View v){
-        Button button=(Button) v;
-
-        if(isListening == false) {
+        if (isListening == false) {
             analyzer.startMicSample();
             isListening = true;
             button.setText("Stop");
-        }else {
+        } else {
             isListening = false;
             analyzer.micStop();
             micSample = analyzer.getSample();
-            button.setText("Listen");
-            //plot();
+            button.setText("Record");
+            setContentView(R.layout.activity_pitch);
+            showSnack(micSample, "mic");
+            plot();
         }
 
     }
 
-    public void plot(){
+    public void plot() {
         // initialize our XYPlot reference:
         plot = (XYPlot) findViewById(R.id.plot);
 
         // create a couple arrays of y-values to plot:
-        if(nativeSample!=null){
+        if (nativeSample != null) {
 
-            Number[] series1Numbers = (Number[])nativeSample.interleave();
+            Number[] series1Numbers = (Number[]) nativeSample.interleave();
 
 
             XYSeries series1 = new SimpleXYSeries(Arrays.asList(series1Numbers),
@@ -164,8 +141,8 @@ public class PitchActivity extends AppCompatActivity {
             plot.addSeries(series1, series1Format);
         }
 
-        if(micSample!=null){
-            Number[] series2Numbers = (Number[])micSample.interleave();
+        if (micSample != null) {
+            Number[] series2Numbers = (Number[]) micSample.interleave();
 
             XYSeries series2 = new SimpleXYSeries(Arrays.asList(series2Numbers),
                     SimpleXYSeries.ArrayFormat.XY_VALS_INTERLEAVED, "Series2");
@@ -188,6 +165,18 @@ public class PitchActivity extends AppCompatActivity {
         // rotate domain labels 45 degrees to make them more compact horizontally:
         plot.getGraphWidget().setDomainLabelOrientation(-45);
 
+    }
+
+    private void showSnack(Sample sample, String source) {
+        if (prefs.getBoolean("show_analyzer_debug", false)) {
+            if (sample != null) {
+                Snackbar.make(findViewById(R.id.fab), source + ">   Dots: " + sample.getSizeX() + "; Nulls: "
+                        + sample.getNulls() + "; max Null Block: "
+                        + sample.getMaxNullBlock(), Snackbar.LENGTH_LONG)
+                        .show();
+
+            }
+        }
     }
 
 }
