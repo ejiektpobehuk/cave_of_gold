@@ -1,3 +1,15 @@
+/**
+ *  ____  _ _       _
+ * |  _ \(_) |_ ___| |__   ___ _ __
+ * | |_) | | __/ __| '_ \ / _ \ '__|
+ * |  __/| | || (__| | | |  __/ |
+ * |_|   |_|\__\___|_| |_|\___|_|
+ *
+ * Pitcher is a guide to a better intonation in English
+ *
+ * @author  ejiek
+ * @version 0.1
+ */
 package com.poly.ejiek.pitcher;
 
 import android.Manifest;
@@ -13,10 +25,16 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ListView;
+
 import java.util.ArrayList;
 
 import be.tarsos.dsp.io.android.AndroidFFMPEGLocator;
 
+/**
+ * Main Activity of the app. Extracts {@link Example Examples} from all known sources, sorts them
+ * and makes a clickable list of them.
+ */
 public class MainActivity extends AppCompatActivity{
 
     public static String PACKAGE_NAME;
@@ -45,9 +63,11 @@ public class MainActivity extends AppCompatActivity{
         setSupportActionBar(toolbar);
     }
 
+    /**
+     * Creates list of buttons from the extracted {@link Example Examples}
+     */
     private void createButtons() {
         ArrayList<Example> examples = eManager.getExamples();
-
         for (final Example exmpl : examples){
             Button myButton = new Button(this);
             myButton.setText(exmpl.getName());
@@ -60,7 +80,8 @@ public class MainActivity extends AppCompatActivity{
             });
 
             LinearLayout ll = (LinearLayout)findViewById(R.id.buttonslayout);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            lp.weight = 1.0f;
             ll.addView(myButton, lp);
         }
     }
@@ -89,6 +110,11 @@ public class MainActivity extends AppCompatActivity{
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * Verifies ability to write to external storage
+     * Needed for API 23+
+     * @param activity
+     */
     public static void verifyStoragePermissions(Activity activity) {
         // Check if we have write permission
         int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);

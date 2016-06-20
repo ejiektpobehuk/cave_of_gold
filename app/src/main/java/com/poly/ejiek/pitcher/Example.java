@@ -1,3 +1,15 @@
+/**
+ *  ____  _ _       _
+ * |  _ \(_) |_ ___| |__   ___ _ __
+ * | |_) | | __/ __| '_ \ / _ \ '__|
+ * |  __/| | || (__| | | |  __/ |
+ * |_|   |_|\__\___|_| |_|\___|_|
+ *
+ * Pitcher is a guide to a better intonation in English
+ *
+ * @author  ejiek
+ * @version 0.1
+ */
 package com.poly.ejiek.pitcher;
 
 import android.content.Context;
@@ -95,5 +107,10 @@ public class Example implements Parcelable {
     private Example(Parcel in) {
         name = in.readString();
         resourceID = in.readInt();
+    }
+
+    @Override
+    public String toString() {
+        return getName();
     }
 }

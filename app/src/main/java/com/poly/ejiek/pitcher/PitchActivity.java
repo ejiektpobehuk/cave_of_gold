@@ -1,3 +1,15 @@
+/**
+ *  ____  _ _       _
+ * |  _ \(_) |_ ___| |__   ___ _ __
+ * | |_) | | __/ __| '_ \ / _ \ '__|
+ * |  __/| | || (__| | | |  __/ |
+ * |_|   |_|\__\___|_| |_|\___|_|
+ *
+ * Pitcher is a guide to a better intonation in English
+ *
+ * @author  ejiek
+ * @version 0.1
+ */
 package com.poly.ejiek.pitcher;
 
 import android.content.Intent;
@@ -9,6 +21,8 @@ import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -27,7 +41,10 @@ import java.util.Arrays;
 
 import be.tarsos.dsp.pitch.PitchProcessor;
 
-
+/**
+ * Activity for visualization, recording and playing users voice
+ * and visualization + playing {@link Example Examples},
+ */
 public class PitchActivity extends AppCompatActivity {
 
     private XYPlot plot;
@@ -52,6 +69,7 @@ public class PitchActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pitch);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -77,6 +95,9 @@ public class PitchActivity extends AppCompatActivity {
         recordFile = this.getFileStreamPath("voice_record.wav").getPath();
     }
 
+    /**
+     * Selector of {@link be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm algorithm}
+     */
     private void setAlgthToSpinner() {
         algSpinner = (Spinner) findViewById(R.id.spinner);
         ArrayList<String> spinnerArray = new ArrayList<String>();
@@ -100,11 +121,20 @@ public class PitchActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Plays {@link Example exaples} sample
+     * @param v Button view
+     */
     public void nativeButtonOnCLick(View v) {
         mp.start();
 
     }
 
+    /**
+     * Start/stop recording and pitch processing microphone stream
+     * Updates plot
+     * @param v Button View
+     */
     public void micButtonOnCLick(View v) {
         Button button = (Button) v;
 
@@ -138,6 +168,10 @@ public class PitchActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Plays users record
+     * @param v Button View
+     */
     public void playButtonOnCLick(View v) {
         Button button = (Button) v;
         MediaPlayer m = new MediaPlayer();
@@ -152,6 +186,9 @@ public class PitchActivity extends AppCompatActivity {
         m.start();
     }
 
+    /**
+     * Updates plot by redrawing available series of data
+     */
     public void plot() {
         // initialize our XYPlot reference:
         plot = (XYPlot) findViewById(R.id.plot);
@@ -197,6 +234,11 @@ public class PitchActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Shows snack with debug information if debug is on
+     * @param sample Sample to provide its data
+     * @param source Name of the source (ex. file, mic)
+     */
     private void showSnack(Sample sample, String source) {
         if (prefs.getBoolean("show_analyzer_debug", false)) {
             if (sample != null) {
@@ -207,6 +249,30 @@ public class PitchActivity extends AppCompatActivity {
 
             }
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            Intent intend = new Intent(PitchActivity.this, SettingsActivity.class);
+            startActivity(intend);
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
 }
