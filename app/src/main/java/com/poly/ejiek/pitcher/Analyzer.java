@@ -99,10 +99,12 @@ public class Analyzer {
 
     /**
      * Core part of processing the sample
+     * Declares a handler for pitch detection
+     * and start a thread jf audio processing
      * @param sampleRate in Hz
      * @param bufferSize in bytes
      */
-    private void startSample(float sampleRate, int bufferSize){
+    private void startSample(final float sampleRate, int bufferSize){
         sample = new Sample();
         timeCorrection = 0;
         currentNullBlock = 1;
@@ -113,15 +115,17 @@ public class Analyzer {
             @Override
             public void handlePitch(PitchDetectionResult result, final AudioEvent audioEvent) {
                 final float pitchInHz = result.getPitch();
+                double timeStamp = audioEvent.getTimeStamp();
                 if (pitchInHz != -1) {
                     if(firstPitch){
                         timeCorrection = (int)(audioEvent.getTimeStamp()*10 +0.5d);
                         firstPitch = false;
                     }
-                    double timeStamp = audioEvent.getTimeStamp();
-                    sample.addX((int) (timeStamp * 10 + 0.5d) - timeCorrection);
-                    sample.addY((int) (pitchInHz + 0.5f));
+                    sample.addPoint((int) (timeStamp * 1000 + 0.5d) - timeCorrection, (int) (pitchInHz + 0.5f));
                 } else {
+
+                    sample.addX((int) (timeStamp * 1000 + 0.5d) - timeCorrection);
+                    sample.addYnull();
                     sample.setNulls(sample.getNulls()+1);
                     if (previosPitch == -1) {
                         currentNullBlock++;

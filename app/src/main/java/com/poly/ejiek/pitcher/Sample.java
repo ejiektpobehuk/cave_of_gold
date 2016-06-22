@@ -51,6 +51,18 @@ public class Sample {
     }
 
     /**
+     * Adds new point of the pitch
+     * @param X timestamp for pisth point
+     * @param Y frequency for pitch point
+     */
+    public void addPoint(int X, int Y) {
+        if(Y < 500){
+            this.X.add(X);
+            this.Y.add(Y);
+        }
+    }
+
+    /**
      * Adds timestamp for pitch
      * @param X timestamp for pisth point
      */
@@ -65,6 +77,15 @@ public class Sample {
     public void addY(int Y) {
         this.Y.add(Y);
     }
+
+    /**
+     * Adds null for pitch which means break of the line
+     */
+    public void addYnull() {
+        this.Y.add(null);
+    }
+
+
 
     /**
      * Returnt total amount of "nulls" returned by pitch detector.
@@ -124,7 +145,9 @@ public class Sample {
         Integer[] intObj = new Integer[Y.size()+X.size()];
         for (int i=0; i < Y.size(); i++) {
             intObj[i*2] = Integer.valueOf(X.get(i));
-            intObj[i*2+1] = Integer.valueOf(Y.get(i));
+            if (Y.get(i) != null) {
+                intObj[i * 2 + 1] = Integer.valueOf(Y.get(i));
+            } else intObj[i * 2 + 1] = null;
         }
         return  intObj;
     }
