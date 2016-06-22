@@ -118,14 +118,15 @@ public class Analyzer {
                 double timeStamp = audioEvent.getTimeStamp();
                 if (pitchInHz != -1) {
                     if(firstPitch){
-                        timeCorrection = (int)(audioEvent.getTimeStamp()*10 +0.5d);
+                        timeCorrection = (int)(audioEvent.getTimeStamp()*1000 +0.5d);
                         firstPitch = false;
                     }
                     sample.addPoint((int) (timeStamp * 1000 + 0.5d) - timeCorrection, (int) (pitchInHz + 0.5f));
                 } else {
-
-                    sample.addX((int) (timeStamp * 1000 + 0.5d) - timeCorrection);
-                    sample.addYnull();
+                    if(!firstPitch){
+                        sample.addX((int) (timeStamp * 1000 + 0.5d) - timeCorrection);
+                        sample.addYnull();
+                    }
                     sample.setNulls(sample.getNulls()+1);
                     if (previosPitch == -1) {
                         currentNullBlock++;
