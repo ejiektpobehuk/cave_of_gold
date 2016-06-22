@@ -14,6 +14,8 @@ package com.poly.ejiek.pitcher;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Bundle;
@@ -29,6 +31,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 
+import com.androidplot.util.Mapping;
 import com.androidplot.xy.LineAndPointFormatter;
 import com.androidplot.xy.PointLabelFormatter;
 import com.androidplot.xy.SimpleXYSeries;
@@ -36,6 +39,9 @@ import com.androidplot.xy.XYPlot;
 import com.androidplot.xy.XYSeries;
 
 import java.io.IOException;
+import java.text.FieldPosition;
+import java.text.Format;
+import java.text.ParsePosition;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -193,20 +199,20 @@ public class PitchActivity extends AppCompatActivity {
         // initialize our XYPlot reference:
         plot = (XYPlot) findViewById(R.id.plot);
 
-        // create a couple arrays of y-values to plot:
+        setPlotColor();
+
         if (nativeSample != null) {
 
             Number[] series1Numbers = (Number[]) nativeSample.interleave();
 
 
             XYSeries series1 = new SimpleXYSeries(Arrays.asList(series1Numbers),
-                    SimpleXYSeries.ArrayFormat.XY_VALS_INTERLEAVED, "Series1");
+                    SimpleXYSeries.ArrayFormat.XY_VALS_INTERLEAVED, "Native Pitch");
 
             LineAndPointFormatter series1Format = new LineAndPointFormatter();
             series1Format.setPointLabelFormatter(new PointLabelFormatter());
             series1Format.configure(getApplicationContext(),
                     R.xml.line_point_formatter_with_labels);
-
 
             plot.addSeries(series1, series1Format);
         }
@@ -215,7 +221,7 @@ public class PitchActivity extends AppCompatActivity {
             Number[] series2Numbers = (Number[]) micSample.interleave();
 
             XYSeries series2 = new SimpleXYSeries(Arrays.asList(series2Numbers),
-                    SimpleXYSeries.ArrayFormat.XY_VALS_INTERLEAVED, "Series2");
+                    SimpleXYSeries.ArrayFormat.XY_VALS_INTERLEAVED, "Your Pitch");
 
             LineAndPointFormatter series2Format = new LineAndPointFormatter();
             series2Format.setPointLabelFormatter(new PointLabelFormatter());
@@ -232,6 +238,18 @@ public class PitchActivity extends AppCompatActivity {
         // rotate domain labels 45 degrees to make them more compact horizontally:
         plot.getGraphWidget().setDomainLabelOrientation(-45);
 
+    }
+
+    /**
+     * Sets color fbd size for range and domain. Not available in xml =\
+     */
+    private void setPlotColor() {
+        plot.getGraphWidget().getDomainOriginTickLabelPaint().setARGB(255,191,191,191);
+        plot.getGraphWidget().getDomainOriginTickLabelPaint().setTextSize(24);
+        plot.getGraphWidget().getDomainOriginLinePaint().setARGB(255,191,191,191);
+        plot.getGraphWidget().getRangeOriginTickLabelPaint().setARGB(255,191,191,191);
+        plot.getGraphWidget().getRangeOriginTickLabelPaint().setTextSize(24);
+        plot.getGraphWidget().getRangeOriginLinePaint().setARGB(255,191,191,191);
     }
 
     /**
